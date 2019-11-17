@@ -24,7 +24,19 @@ export default class ContextMenu extends React.PureComponent {
 
     const menu = document.getElementById('contextMenu');
     menu.addEventListener('mouseleave', () => {
-      this.closeContextMenu();
+      const { closeOnClickOut } = this.props;
+      if (!closeOnClickOut) {
+        this.closeContextMenu();
+      }
+    });
+
+    document.addEventListener('click', (event) => {
+      const { closeOnClickOut } = this.props;
+
+      if (closeOnClickOut && !menu.contains(event.target)) {
+        event.preventDefault();
+        this.closeContextMenu();
+      }
     });
   }
 

@@ -49,3 +49,7 @@ be available anywhere within that element.
 
 Pass `closeOnClick` (boolean defaulted to `false`) to ```ContextMenu``` to close
 the menu upon item click.
+
+Pass `closeOnClickOut` (boolean defaulted to `false`) to `ContextMenu` to close
+the menu upon clicking outside of the menu (versus the default, which will close
+the menu when the mouse moves outside of the menu boundary).
