@@ -12,6 +12,7 @@ export default class ContextMenu extends React.PureComponent {
 
     this.state = {
       target: '',
+      activeMenuID: '',
     };
   }
 
@@ -21,8 +22,15 @@ export default class ContextMenu extends React.PureComponent {
     context.addEventListener('contextmenu', (event) => {
       this.openContextMenu(event);
     });
+    const id = `${event.currentTarget.id}-menu`;
+    const menu = document.getElementById(id);
 
-    const menu = document.getElementById('contextMenu');
+    menu.style.cssText =
+      menu.style.cssText +
+      'left: inherit;' +
+      'top: inherit;' +
+      'visibility: visible;';
+
     menu.addEventListener('mouseleave', () => {
       const { closeOnClickOut } = this.props;
       if (!closeOnClickOut) {
@@ -38,6 +46,7 @@ export default class ContextMenu extends React.PureComponent {
         this.closeContextMenu();
       }
     });
+    this.setState({ activeMenuID: id });
   }
 
   openContextMenu(event) {
@@ -47,16 +56,17 @@ export default class ContextMenu extends React.PureComponent {
     const xOffset = Math.max(document.documentElement.scrollLeft, document.body.scrollLeft);
     const yOffset = Math.max(document.documentElement.scrollTop, document.body.scrollTop);
 
-    const menu = document.getElementById('contextMenu');
-
-    menu.style.cssText = menu.style.cssText + `left: ${event.clientX + xOffset}px;`
-      + `top: ${event.clientY + yOffset}px;`
-      + 'visibility: visible;';
-  }
-
-  closeContextMenu() {
-    const menu = document.getElementById('contextMenu');
-    menu.style.cssText = menu.style.cssText + 'visibility: hidden;';
+  closeContextMenu(callBack) {
+    const { activeMenuID } = this.state;
+    if (activeMenuID && activeMenuID.length > 0) {
+      const menu = document.getElementById(activeMenuID);
+      menu.style.cssText = menu.style.cssText + 'visibility: hidden;';
+    }
+    this.setState({ activeMenuID: '' }, () => {
+      if (callBack) {
+        callBack();
+      }
+    });
   }
 
   getItems() {
@@ -68,20 +78,37 @@ export default class ContextMenu extends React.PureComponent {
           this.closeContextMenu();
           item.onClick();
         },
-      }))
+      }));
     } else {
       return items;
     }
   }
 
   render() {
+    const { contextId } = this.props;
+    const menuId = `${contextId}-menu`;
     return (
       <div
-        id="contextMenu"
-        style={{"position":"absolute","display":"flex","flexFlow":"column","border":"1px solid rgba(0,0,0,0.15)","borderRadius":"2px","boxShadow":"0 1px 1px 1px rgba(0,0,0,0.05)","padding":"10px 15px","background":"#f8f8f8","visibility":"hidden"}}
+        id={menuId}
+        className="context-menu-container"
+        style={{
+          position: 'absolute',
+          display: 'flex',
+          flexFlow: 'column',
+          border: '1px solid rgba(0,0,0,0.15)',
+          borderRadius: '2px',
+          boxShadow: '0 1px 1px 1px rgba(0,0,0,0.05)',
+          padding: '10px 15px',
+          background: '#f8f8f8',
+          visibility: 'hidden',
+        }}
       >
-        {this.getItems().map(item => (
-          <MenuItem item={item} key={item.label}/>
+        {this.getItems().map((item) => (
+          <MenuItem
+            className="context-menu-item"
+            item={item}
+            key={item.label}
+          />
         ))}
       </div>
     );
