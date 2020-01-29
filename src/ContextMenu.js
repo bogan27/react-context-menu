@@ -4,16 +4,13 @@ import PropTypes from 'prop-types';
 import MenuItem from './@components/MenuItem';
 
 export default class ContextMenu extends React.PureComponent {
+  static activeMenuID;
+
   constructor(props) {
     super(props);
     this.getItems = this.getItems.bind(this);
     this.openContextMenu = this.openContextMenu.bind(this);
     this.closeContextMenu = this.closeContextMenu.bind(this);
-
-    this.state = {
-      target: '',
-      activeMenuID: '',
-    };
   }
 
   componentDidMount() {
@@ -22,14 +19,34 @@ export default class ContextMenu extends React.PureComponent {
     context.addEventListener('contextmenu', (event) => {
       this.openContextMenu(event);
     });
+
+    document.addEventListener('click', (event) => {
+      const { closeOnClick } = this.props;
+      if (closeOnClick) {
+        event.preventDefault();
+        this.closeContextMenu();
+      }
+    });
+  }
+
+  openContextMenu(event) {
+    event.preventDefault();
+    this.closeContextMenu();
+
+    const xOffset = Math.max(
+      document.documentElement.scrollLeft,
+      document.body.scrollLeft,
+    );
+    const yOffset = Math.max(
+      document.documentElement.scrollTop,
+      document.body.scrollTop,
+    );
+
     const id = `${event.currentTarget.id}-menu`;
     const menu = document.getElementById(id);
 
-    menu.style.cssText =
-      menu.style.cssText +
-      'left: inherit;' +
-      'top: inherit;' +
-      'visibility: visible;';
+    menu.style.cssText +=
+      'left: inherit;' + 'top: inherit;' + 'visibility: visible;';
 
     menu.addEventListener('mouseleave', () => {
       const { closeOnClickOut } = this.props;
@@ -38,41 +55,21 @@ export default class ContextMenu extends React.PureComponent {
       }
     });
 
-    document.addEventListener('click', (event) => {
-      const { closeOnClickOut } = this.props;
-
-      if (closeOnClickOut && !menu.contains(event.target)) {
-        event.preventDefault();
-        this.closeContextMenu();
-      }
-    });
-    this.setState({ activeMenuID: id });
+    ContextMenu.activeMenuID = id;
   }
 
-  openContextMenu(event) {
-    event.preventDefault();
-    this.setState({ target: event.target });
-
-    const xOffset = Math.max(document.documentElement.scrollLeft, document.body.scrollLeft);
-    const yOffset = Math.max(document.documentElement.scrollTop, document.body.scrollTop);
-
-  closeContextMenu(callBack) {
-    const { activeMenuID } = this.state;
-    if (activeMenuID && activeMenuID.length > 0) {
-      const menu = document.getElementById(activeMenuID);
-      menu.style.cssText = menu.style.cssText + 'visibility: hidden;';
+  closeContextMenu() {
+    if (ContextMenu.activeMenuID && ContextMenu.activeMenuID.length > 0) {
+      const menu = document.getElementById(ContextMenu.activeMenuID);
+      menu.style.cssText += 'visibility: hidden;';
     }
-    this.setState({ activeMenuID: '' }, () => {
-      if (callBack) {
-        callBack();
-      }
-    });
+    ContextMenu.activeMenuID = null;
   }
 
   getItems() {
     const { items, closeOnClick } = this.props;
     if (closeOnClick) {
-      return items.map(item => ({
+      return items.map((item) => ({
         ...item,
         onClick: () => {
           this.closeContextMenu();
@@ -116,16 +113,20 @@ export default class ContextMenu extends React.PureComponent {
 }
 
 ContextMenu.propTypes = {
-  items: PropTypes.arrayOf(PropTypes.shape({
-    label: PropTypes.string.isRequired,
-    onClick: PropTypes.func.isRequired,
-    icon: PropTypes.string,
-  })),
+  items: PropTypes.arrayOf(
+    PropTypes.shape({
+      label: PropTypes.string.isRequired,
+      onClick: PropTypes.func.isRequired,
+      icon: PropTypes.string,
+    }),
+  ),
   contextId: PropTypes.string.isRequired,
   closeOnClick: PropTypes.bool,
+  closeOnClickOut: PropTypes.bool,
 };
 
 ContextMenu.defaultProps = {
   items: [],
   closeOnClick: false,
+  closeOnClickOut: false,
 };
